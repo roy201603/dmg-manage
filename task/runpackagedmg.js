@@ -68,26 +68,31 @@ async function run (limit = 100) {
   const database = client.db('test')
   const Postpan = database.collection('postpan.macbl')
 
-  let rewriteapp = glob.sync('/Volumes/iDisk/dmg_out/macshi/*/').map(v => path.basename(v).split('_').shift())
-  rewriteapp = rewriteapp.map(v => Number(v))
+  // let rewriteapp = glob.sync('/Volumes/iDisk/dmg_out/macshi/*/').map(v => path.basename(v).split('_').shift())
+  // rewriteapp = rewriteapp.map(v => Number(v))
 
   const cursor = Postpan.find({
-    mypanState: '0',
+    /* mypanState: '0',
     myPanInfo: {
       $ne: null
-    }
+    }, */
+    dmgInfoState: '-9',
     // dmgInfoState: { // 还没有大包的文件
     // $eq: null
     // $eq: '-9'
     // },
     // dmgInfoRemark: '复制文件错误，message：'
-    // _id: new ObjectId('617244ab6b39148ecf4d8b24'),
+    _id: new ObjectId('617243f96b39148ecf4d8954')
   }).limit(limit)
 
   const list = await cursor.toArray()
 
   let index = 1
   for (const pan of list) {
+    if (pan.dmgInfoState === '0') {
+      console.error('改软件已经打包过，请勿重新打包')
+      return
+    }
     // /mac-apps/xxmac/111634474710578_snapmotion-for-mac-/SnapMotion_4.3.3.dmg
     if (!pan.myPanInfo.path) {
       console.error('dmg路径为空', pan._id)
@@ -105,19 +110,25 @@ async function run (limit = 100) {
 
       await client.connect()
       // update mongodb
-      const updateRes = await Postpan.updateOne({ _id: pan._id }, {
-        $set: {
-          dmgInfoState: '0',
-          dmgInfo: {
-            ...packageResult
-          },
-          dmgInfoRemark: '打包成功'
+      const updateRes = await Postpan.updateOne({ _id: pan._id }, [
+        {
+          $set: {
+            dmgInfoState: '0',
+            dmgInfo: {
+              ...packageResult
+            },
+            dmgInfoRemark: '打包成功',
+            myShareState: '-8,需要重新分享'
+          }
+        },
+        {
+          $unset: ['myShareInfo']
         }
-      })
+      ])
 
       logFile('./after-package-all.txt', JSON.stringify(packageResult) + ',')
 
-      logger.notice(`[${index}/${list.length}]${packageResult.localSource}===>${packageResult.localDest}`, { beforFiles: packageResult.beforeAllFiles.join(','), data: packageResult })
+      logger.notice(`[${index}/${list.length}][${pan._id.toString()}]${packageResult.localSource}===>${packageResult.localDest}`, { beforFiles: packageResult.beforeAllFiles.join(','), data: packageResult })
       console.log(`[${index}/${list.length}][${pan._id.toString()}]${packageResult.localSource}===>${packageResult.localDest}`)
       // console.log(updateRes)
       console.log('')
@@ -136,9 +147,9 @@ async function run (limit = 100) {
         }
       })
 
-      console.error(error.message, '\n\r')
+      console.error(`[${pan._id.toString()}] ${error.message}`, '\n\r')
       console.error(pan)
-      logger.error(error.message, { data: pan })
+      logger.error(`[${pan._id.toString()}] ${error.message}`, { data: pan })
     } finally {
       // Ensures that the client will close when you finish/error
       await client.close()
@@ -152,12 +163,6 @@ async function run (limit = 100) {
   }
 
   // await dmgMg.run()
-}
-
-async function test (str) {
-  // return str.replace(/(["\s'$`\\])/g, '\\$1')
-  const { command } = await execa('echo', [str])
-  return await execa.command(command) // works; `command` is 'echo unicorns'
 }
 
 ;(async () => {
