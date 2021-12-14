@@ -2,6 +2,7 @@
 node_modules
 /dist
 /save-data
+/logs
 
 
 # local env files
