@@ -6,6 +6,11 @@ const expect = require('chai').expect
 const glob = require('glob')
 const { attachDmgTest } = require('./common/common')
 
+const { MongoClient, ObjectId } = require('mongodb')
+const config = require('../config/config')
+
+const client = new MongoClient(config.connectionStr)
+
 describe('hdiutil test', function () {
   let mountPath = null
   it('-attach password file', async function () {
@@ -46,4 +51,6 @@ describe('hdiutil test', function () {
     // expect(fs.existsSync(mountPath)).to.be.false
     // expect(error).to.be.an('error')
   })
+
+  it('')
 })

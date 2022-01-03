@@ -10,11 +10,11 @@ function escapeshellarg (cmd, isWindows, escapeWinEnv) {
   if (typeof (escapeWinEnv) === 'undefined') { escapeWinEnv = true }
 
   if (isWindows === true) {
-    let escaped_cmd = '"' + cmd.replace(/"/g, ' ') + '"'
+    let escapedCmd = '"' + cmd.replace(/"/g, ' ') + '"'
     if (escapeWinEnv === true) {
-      escaped_cmd = escaped_cmd.replace(/%/g, ' ')
+      escapedCmd = escapedCmd.replace(/%/g, ' ')
     }
-    return escaped_cmd
+    return escapedCmd
   }
   return '\'' + cmd.replace('\'', '\'\\\'') + '\''
 }
@@ -35,15 +35,15 @@ function escapeshellcmd (cmd, isWindows, escapeWinEnv) {
   if (typeof (isWindows) === 'undefined') { isWindows = true }
   if (typeof (escapeWinEnv) === 'undefined') { escapeWinEnv = true }
 
-  let escaped_cmd = cmd.replace(
+  let escapedCmd = cmd.replace(
     // eslint-disable-next-line
     /(["'#&;`\|\*\?~<>\^\(\)\[\]\{\}\$\\\x0A\xFF])/g,
     (isWindows === true) ? '^$1' : '\\$1'
   )
   if ((escapeWinEnv === true) && (isWindows === true)) {
-    escaped_cmd = escaped_cmd.replace(/%/g, '^%')
+    escapedCmd = escapedCmd.replace(/%/g, '^%')
   }
-  return escaped_cmd
+  return escapedCmd
 }
 exports.escapeshellcmd = escapeshellcmd
 

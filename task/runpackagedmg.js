@@ -5,9 +5,9 @@ const glob = require('glob')
 const path = require('path')
 const { MongoClient, ObjectId } = require('mongodb')
 const { logFile, sleep } = require('../lib/util')
-const { escapeshellcmd } = require('php-escape-shell')
+const config = require('../config/config')
 
-const client = new MongoClient('mongodb://192.168.31.121:27017/')
+const client = new MongoClient(config.connectionStr)
 
 function copyFileToSync (sourceDir, dest, limit = 5) {
   // shell mv -f /Volumes/iDisk/dmg_out/macshi/{161634475799553_maccleanse-for-mac-,161634475799551_a-better-finder-attributes-6-for-mac-} /Volumes/iDisk/test
@@ -36,6 +36,20 @@ function copyFileToSync (sourceDir, dest, limit = 5) {
 
 async function run (limit = 100) {
   const dmgMg = require('../lib/dmg-manage')
+
+  const filter = {
+    /* mypanState: '0',
+    myPanInfo: {
+      $ne: null
+    }, */
+    dmgInfoState: '-9'
+    // dmgInfoState: { // 还没有大包的文件
+    // $eq: null
+    // $eq: '-9'
+    // },
+    // dmgInfoRemark: '复制文件错误，message：'
+    // _id: new ObjectId('617243f96b39148ecf4d8954')
+  }
   const dropDmgConfig = {
     drop: 'drop',
     install: 'install',
@@ -71,19 +85,7 @@ async function run (limit = 100) {
   // let rewriteapp = glob.sync('/Volumes/iDisk/dmg_out/macshi/*/').map(v => path.basename(v).split('_').shift())
   // rewriteapp = rewriteapp.map(v => Number(v))
 
-  const cursor = Postpan.find({
-    /* mypanState: '0',
-    myPanInfo: {
-      $ne: null
-    }, */
-    dmgInfoState: '-9',
-    // dmgInfoState: { // 还没有大包的文件
-    // $eq: null
-    // $eq: '-9'
-    // },
-    // dmgInfoRemark: '复制文件错误，message：'
-    _id: new ObjectId('617243f96b39148ecf4d8954')
-  }).limit(limit)
+  const cursor = Postpan.find(filter).limit(limit)
 
   const list = await cursor.toArray()
 
@@ -169,7 +171,7 @@ async function run (limit = 100) {
   // const str = 'Understand v5.1(1010)/test(sd)/a'
   // const a = escapeshellcmd(str, false, false)
 
-  await run(700)
+  await run(100)
 
   // await test()
   console.log('done')

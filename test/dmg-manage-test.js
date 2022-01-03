@@ -6,6 +6,10 @@ const assert = require('chai').assert
 const glob = require('glob')
 const { attachDmgTest } = require('./common/common')
 const dmgMange = require('../lib/dmg-manage')
+const { MongoClient, ObjectId } = require('mongodb')
+const config = require('../config/config')
+
+const client = new MongoClient(config.connectionStr)
 
 const p = (filePath) => {
   return path.join(__dirname, filePath)
@@ -21,12 +25,19 @@ if (str.includes('initcall', 'TopCenter')) {
 }
  */
 describe('dmgmanage test', function () {
+  before(async () => {
+    await client.connect()
+  })
+  after(async () => {
+    await client.close()
+  })
   const mountPath = null
   it('-package dmg file [debug]', async function () {
     // mounted dmg
     // const mountPath = await attachDmgTest()
 
     // expect(error).to.be.an('error')
+    const dmgFile = p('./assets/12244_password/password.dmg')
     const dest = '/Volumes/iDisk/dmg_out/macshi'
     const dropDmgConfig = {
       drop: 'drop',
@@ -48,30 +59,28 @@ describe('dmgmanage test', function () {
       }
     }
 
-    const dmgFile = p('./assets/12244_password/password.dmg')
-
     try {
       const version = '4.3.2'
-      // const ret = await dmgMange.buildDmg(
-      //   dmgFile,
-      //   dropDmgConfig,
-      //   packageConfig,
-      //   dest,
-      //   false
-      // )
+      const ret = await dmgMange.buildDmg(
+        dmgFile,
+        dropDmgConfig,
+        packageConfig,
+        dest,
+        false
+      )
 
-      const ret = {
-        allFiles: ['SnapMotion.app', '已损坏修复', '更多软件下载.webloc'],
-        beforeAllFiles: ['SnapMotion.app', '将应用拖入此文件夹完成安装', '更多Mac破解软件.webloc'],
-        version: '4.3.2',
-        type: 'drop',
-        localSource: '/Users/apple/source/dmg-manage/test/assets/12244_password/password.dmg',
-        localDest: '/Volumes/iDisk/dmg_out/macshi/12244_password/SnapMotion_4.3.2(macshi.com).dmg',
-        relateDest: '12244_password/SnapMotion_4.3.2(macshi.com).dmg',
-        success: true,
-        sourceSize: 10022912,
-        size: 9932147
-      }
+      // const ret = {
+      //   allFiles: ['SnapMotion.app', '已损坏修复', '更多软件下载.webloc'],
+      //   beforeAllFiles: ['SnapMotion.app', '将应用拖入此文件夹完成安装', '更多Mac破解软件.webloc'],
+      //   version: '4.3.2',
+      //   type: 'drop',
+      //   localSource: '/Users/apple/source/dmg-manage/test/assets/12244_password/password.dmg',
+      //   localDest: '/Volumes/iDisk/dmg_out/macshi/12244_password/SnapMotion_4.3.2(macshi.com).dmg',
+      //   relateDest: '12244_password/SnapMotion_4.3.2(macshi.com).dmg',
+      //   success: true,
+      //   sourceSize: 10022912,
+      //   size: 9932147
+      // }
 
       assert.includeMembers(ret.beforeAllFiles, ['SnapMotion.app', '将应用拖入此文件夹完成安装', '更多Mac破解软件.webloc'])
       assert.includeMembers(ret.allFiles, ['已损坏修复', '更多软件下载.webloc'])
